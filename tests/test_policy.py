@@ -36,6 +36,24 @@ class PolicyTests(unittest.TestCase):
         self.assertEqual(result["state"], "unknown")
         self.assertFalse(result["policy"]["allow_message"])
 
+    def test_pending_whoop_metadata_is_preserved(self) -> None:
+        result = build_policy_contract(
+            {
+                "state": "unknown",
+                "whoop_data_freshness": "pending_score",
+                "classification_source": None,
+                "sleep_score_state": "PENDING_SCORE",
+                "recovery_score_state": None,
+                "sleep_id": "sleep-1",
+                "finalization_delay_minutes": 30,
+            },
+            trigger_source="test",
+        )
+
+        self.assertEqual(result["state"], "unknown")
+        self.assertEqual(result["inputs"]["whoop_data_freshness"], "pending_score")
+        self.assertEqual(result["inputs"]["sleep_score_state"], "PENDING_SCORE")
+
 
 if __name__ == "__main__":
     unittest.main()

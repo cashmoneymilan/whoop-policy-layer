@@ -140,10 +140,14 @@ def approved_message(state: str, policy: dict[str, Any], inputs: dict[str, Any],
     options = (choices or DEFAULT_CHOICES)[:3]
     message_type = policy["message_type"]
     recovery = inputs.get("recovery_score")
+    freshness = inputs.get("whoop_data_freshness")
     has_anchor = inputs.get("calendar_buffer_hours") is not None
     if message_type == "structure_prompt":
         anchor = "no calendar anchor" if not has_anchor else "a loose calendar anchor"
-        recovery_text = f"Recovery is {recovery:.0f}%" if isinstance(recovery, (int, float)) else "Recovery is low"
+        if freshness and freshness != "finalized_current":
+            recovery_text = "WHOOP is still finalizing sleep"
+        else:
+            recovery_text = f"Recovery is {recovery:.0f}%" if isinstance(recovery, (int, float)) else "Recovery is low"
         return {"text": f"{recovery_text} and there is {anchor}. Pick one thing to move now.", "choices": options}
     if message_type == "recovery_prompt":
         return {"text": "Low-capacity mode. Pick one low-pressure next step or call recovery.", "choices": options[:2] + ["Recovery block"]}
@@ -172,6 +176,14 @@ def build_policy_contract(
         "calendar_buffer_hours": num(inputs.get("calendar_buffer_hours")),
         "unanswered_checkins": int(num(inputs.get("unanswered_checkins")) or 0),
         "trigger_source": trigger_source,
+        "whoop_data_freshness": inputs.get("whoop_data_freshness"),
+        "classification_source": inputs.get("classification_source"),
+        "sleep_score_state": inputs.get("sleep_score_state"),
+        "recovery_score_state": inputs.get("recovery_score_state"),
+        "sleep_id": inputs.get("sleep_id"),
+        "recovery_sleep_id": inputs.get("recovery_sleep_id"),
+        "sleep_end": inputs.get("sleep_end"),
+        "finalization_delay_minutes": inputs.get("finalization_delay_minutes"),
     }
     state = inputs.get("state") or classify_state(
         recovery_score=normalized["recovery_score"],
